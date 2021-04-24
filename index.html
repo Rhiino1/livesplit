@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <h1 data-chronometer>00:00</h1>
+  <button id="play">play</button>
+  <button id="pause">pause</button>
+  <button id="reset">reset</button>
+  <ul id="messages"></ul>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    let socket = io();
+    const playButton = document.querySelector('#play');
+    const pauseButton = document.querySelector('#pause');
+    const resetButton = document.querySelector('#reset');
+
+    let chronometerDisplay = document.querySelector(`[data-chronometer]`);
+
+    socket.on('connected', (args) => {
+      let text;
+      if (args[0].hours === '00') {
+        text = `${args[0].minutes}:${args[0].seconds}`
+      } else {
+        text = `${args[0].hours}:${args[0].minutes}:${args[0].seconds}`
+      }
+
+      if (args[1] == 'count') {
+        chronometerDisplay.textContent = text
+      } else if (args[1] == 'paused') {
+        chronometerDisplay.textContent = text
+        playButton.innerHTML = 'resume';
+      } else if (args[1] == 'clear') {
+        chronometerDisplay.textContent = `00:00`
+      }
+    })
+
+    playButton.addEventListener('click', () => {
+      socket.emit('start')
+    })
+
+    pauseButton.addEventListener('click', () => {
+      socket.emit('pause')
+    })
+
+    resetButton.addEventListener('click', () => {
+      socket.emit('reset')
+    })
+
+    socket.on('paused', (args) => {
+      playButton.innerHTML = 'resume';
+    })
+
+    socket.on('count', (args) => {
+      playButton.innerHTML = 'play';
+      let text;
+      if (args[0].hours === '00') {
+        text = `${args[0].minutes}:${args[0].seconds}`
+      } else {
+        text = `${args[0].hours}:${args[0].minutes}:${args[0].seconds}`
+      }
+      chronometerDisplay.textContent = text;
+    })
+
+    socket.on('clear', (args) => {
+      chronometerDisplay.textContent = `00:00`
+    })
+  </script>
+</body>
+
+</html>
